@@ -14,9 +14,13 @@ def get_refresh_token(request):
 
 
 def get_access_token(request):
+    #The request from the client side should contain an refresh token. Retreive this
     refresh_token = request.GET.get('refresh_token')
+    #Make the API call to Yellowfin using the method defined in the yellowfin.py file
     access_token = yellowfin.get_access_token(refresh_token)
+    #Turn the access token into a JSON Object
     data = json.dumps(access_token)
+    #Send this back to the client
     return HttpResponse(data, content_type='application/json')
 
 

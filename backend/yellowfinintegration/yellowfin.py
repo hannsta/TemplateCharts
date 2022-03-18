@@ -18,8 +18,8 @@ def get_refresh_token():
             'Content-Type': 'application/json',
             'Accept':'application/vnd.yellowfin.api-v1+json'}
     data = {
-        "userName": "admin@yellowfin.com.au",
-        "password": "test",
+        "userName": ADMIN_USER,
+        "password": ADMIN_PASSWORD,
     }
     r = requests.post(url = API_ENDPOINT, data = json.dumps(data), headers=headers) 
     r_json= json.loads(r.text)
