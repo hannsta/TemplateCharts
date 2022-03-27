@@ -10,7 +10,7 @@ from django.contrib.auth import authenticate, login, logout
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import ensure_csrf_cookie
-from models import Template, DataSource
+from yellowfinintegration.models import Template, DataSource
 import datetime
 from django.forms.models import model_to_dict
 
@@ -32,23 +32,28 @@ def save_template(request):
     if request.method=='POST':
         body_unicode = request.body.decode('utf-8')
         body = json.loads(body_unicode)  
-        reports = Template.objects.filter(user=request.user.username, reportid=body['templateid']) 
-        if (reports):
-            report = reports.first()
-            report.name = body['name']
-            report.report = body
-            report.save()
+        templates = None
+        if (body['templateId']):
+            templates = Template.objects.filter(user=request.user.username, templateid=body['templateId']) 
+        if (templates):
+            template = templates.first()
+            template.name = body['templateName']
+            template.template = body['template'],
+            template.scripts = body['scripts']
+            template.save()
         else:
             template = Template(
                 user = request.user.username,
-                name = body['name'],
+                name = body['templateName'],
                 created = datetime.datetime.now(),
                 modified = datetime.datetime.now(),
                 template = body['template'],
                 scripts = body['scripts']
                 )
             template.save()
-        return HttpResponse(status=204)
+        
+        content = template.templateid
+        return HttpResponse(content, content_type='application/json')
 
 def get_template(request):
     if request.method=='GET':
@@ -57,7 +62,14 @@ def get_template(request):
         template = templates.first()
         content = json.dumps(model_to_dict( template ))
         return HttpResponse(content, content_type='application/json')
-        
+
+
+def get_templates(request):
+    if request.method=='GET':
+        templates = Template.objects.filter(user=request.user.username)
+        content  = list(templates.values_list("name", "templateid"))
+        return HttpResponse(json.dumps(content), content_type='application/json')
+
 def parse_options(request):
     if request.method=='POST':
         body_unicode = request.body.decode('utf-8')

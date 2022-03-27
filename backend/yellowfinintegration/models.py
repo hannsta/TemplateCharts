@@ -7,7 +7,7 @@ class Template(models.Model):
     templateid = models.CharField(max_length=50,default=uuid.uuid4, editable=False, unique=True)
     created = models.DateField(null=True)
     modified = models.DateField(null=True)
-    template = models.FileField(upload_to ='templates/')
+    template = models.TextField()
     scripts = models.TextField()
 
 class Widget(models.Model):

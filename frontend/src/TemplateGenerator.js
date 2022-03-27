@@ -7,12 +7,14 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faTimes, faCheck } from '@fortawesome/free-solid-svg-icons'
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import TemplateList from './TemplateList';
 
 function TemplateGenerator() {
 
 const [template, setTemplate] = useState('')
 const [scripts, setScripts] = useState('')
 const [templateName, setTemplateName] = useState('')
+const [templateId, setTemplateId] = useState('')
 const [parsedTemplate, setParsedTemplate] = useState('')
 const [properties, setProperties] = useState('')
 const [time, setTime] = useState('')
@@ -40,9 +42,10 @@ function saveTemplate(){
   var body = JSON.stringify({
     'scripts':scripts,
     'template':template,
-    'templateName': templateName
+    'templateName': templateName,
+    'templateId':templateId
   })
-  fetch('parse_options', {
+  fetch('save_template', {
     method: 'POST',
     credentials: 'include',
     mode: 'same-origin',
@@ -52,7 +55,7 @@ function saveTemplate(){
     },
     body: body
   }).then(response => response.text())
-  .then(console.log("template Saved"))
+  .then(data => setTemplateId(data))
 
 }
 function runTemplate(){
@@ -92,15 +95,22 @@ function saveProperties(property, value){
   setProperties(propertyCopy);
 
 }
+function saveTemplateName(e){
+  setTemplateName(e.target.value);
+}
+
+
 return (
   <div id="templater">
       <div className="templateContainer"> 
+        <TemplateList/>
         <div className="parseButton" onClick={parseTemplate}>
           Parse Template
         </div>
         <div className="parseButton" onClick={saveTemplate}>
           Save Template
         </div>
+        <input type="text" defaultValue="New Template" value={templateName} onChange={saveTemplateName}></input>
         <Editor
           language="javascript"
           displayName="Scripts"
