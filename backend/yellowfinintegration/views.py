@@ -13,6 +13,7 @@ from django.views.decorators.csrf import ensure_csrf_cookie
 from yellowfinintegration.models import Template, DataSource
 import datetime
 from django.forms.models import model_to_dict
+from django.core import serializers
 
 import re
 # Create your views here.
@@ -38,7 +39,7 @@ def save_template(request):
         if (templates):
             template = templates.first()
             template.name = body['templateName']
-            template.template = body['template'],
+            template.template = body['template']
             template.scripts = body['scripts']
             template.save()
         else:
@@ -60,8 +61,20 @@ def get_template(request):
         templateid = request.GET['templateid']
         templates = Template.objects.filter(user=request.user.username, templateid=templateid) 
         template = templates.first()
-        content = json.dumps(model_to_dict( template ))
-        return HttpResponse(content, content_type='application/json')
+        customVars = []
+        for line in template.template.split('\n'):
+            placeholders = re.findall('\{{.*?\}}',line)
+            if (len(placeholders) > 0):
+                for holder in placeholders:
+                    customVar = holder.replace('{{','').replace('}}','').split("|")
+                    customVars.append({
+                        'name':customVar[0],
+                        'type':customVar[1]
+                    })
+        content = serializers.serialize('json', [template])
+        content = json.loads(content)
+        content[0]['parsed'] = customVars
+        return HttpResponse(json.dumps(content), content_type='application/json')
 
 
 def get_templates(request):

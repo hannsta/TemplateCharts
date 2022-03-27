@@ -7,6 +7,9 @@ import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
 function TemplateList(props) {
+    const {
+        loadTemplate
+    } = props
     const [templates, setTemplates] = useState('')
 
     useEffect(() => {
@@ -14,19 +17,20 @@ function TemplateList(props) {
         .then(response => response.text())
         .then(data => setTemplates(JSON.parse(data)))
       }, []);
-
-var templateObj = []
-if (templates){
-    for (var template of templates){
-        console.log(template)
-        templateObj.push(<div id="templateIcon" uuid={template[1]}>{template[0]}</div>)
+    function selectTemplate(e){
+        loadTemplate(e.target.getAttribute("uuid"))
     }
-}
-return (
-  <div id="templateList">
-      {templateObj}
-  </div>
-)
+    var templateObj = []
+    if (templates){
+        for (var template of templates){
+            templateObj.push(<div onClick={selectTemplate} className="templateIcon" uuid={template[1]}>{template[0]}</div>)
+        }
+    }
+    return (
+    <div id="templateList">
+        {templateObj}
+    </div>
+    )
 }
 
 

@@ -58,6 +58,18 @@ function saveTemplate(){
   .then(data => setTemplateId(data))
 
 }
+function loadTemplate(id){
+  fetch('get_template?templateid='+id)
+  .then(response => response.text())
+  .then(data => {
+    var templateData = JSON.parse(data)
+    setTemplate(templateData[0].fields.template)
+    setScripts(templateData[0].fields.scripts)
+    setTemplateId(templateData[0].fields.templateid)
+    setTemplateName(templateData[0].fields.name)
+    setParsedTemplate(templateData[0].parsed)
+  })
+}
 function runTemplate(){
   var csrftoken = Cookies.get('csrftoken');
   var body = JSON.stringify({'properties':properties,'script':template})
@@ -103,7 +115,7 @@ function saveTemplateName(e){
 return (
   <div id="templater">
       <div className="templateContainer"> 
-        <TemplateList/>
+        <TemplateList loadTemplate={loadTemplate}/>
         <div className="parseButton" onClick={parseTemplate}>
           Parse Template
         </div>
