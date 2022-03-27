@@ -20,10 +20,10 @@ from django.urls import include, path
 
 
 urlpatterns = [
-    path('refresh_token/', views.get_refresh_token, name='refresh_token'),
-    path('access_token/', views.get_access_token, name='access_token'),
-    path('login_token/', views.get_login_token, name='login_token'),
-    path('signals/', views.get_signals, name='signals'),
-    path('test/', views.test, name='test')
-
+    path('csrf', views.csrf, name='csrf'),
+    path('save_template',views.save_template, name='save_template'),
+    path('get_script',views.get_script, name='get_script'),    
+    path('addUser', views.addUser, name='addUser'),
+    path('loginUser', views.loginUser, name='loginUser'),
+    path('logoutUser',views.logoutUser, name='logoutUser'),
 ]

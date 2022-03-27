@@ -13,31 +13,31 @@ body {
   margin: 0;
 }
 
-.top-pane {
-  background-color: hsl(225, 6%, 25%);
-}
-
-.pane {
-  flex:3;
-  height: 100vh;
-  display: flex;
-  flex-direction: column;
-}
-.nav{
-  flex:1;
-}
-.script-pane{
-  flex:5
-}
-#container{
+#templater{
   display:flex;
   flex-direction:row;
+  width:100%;
+  height:100%;
 }
-.HtmlContainer{
+.templateContainer{
+  display:flex;
+  flex-direction: column;
   flex:1;
 }
-.JsContainer{
-  flex:3;
+.optionsContainer{
+  display:flex;
+  flex:1;
+}
+.parseButton{
+  display:flex;
+  align-items: center;
+  justify-content: center;
+  height:45px;
+  border:1px solid #ccc;
+}
+.renderContainer{
+  display:flex;
+  flex:1;
 }
 .navHeader{
   display:flex;
@@ -130,14 +130,6 @@ body {
   border-bottom-right-radius: .5rem;
   border-bottom-left-radius: .5rem;
   overflow: hidden;
-}
-.restStatus{
-  width:25px;
-  height:25px;
-  margin-left: auto;
-  display:flex;
-  align-items: center;
-  justify-content: center;
 }
 
 
