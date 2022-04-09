@@ -1,11 +1,14 @@
 body {
   margin: 0;
-  font-family:Libre Franklin;
+  font-family: 'Open Sans';
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  height: 100vh;
+
 }
 #container{
   height:500px;
+  min-width:300px;
 }
 code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
@@ -22,10 +25,39 @@ body {
   height:100%;
 }
 .templateIcon{
-  height:40px;
+  height:30px;
   width:100px;
   border: 1px solid #efefef;
   border-radius: 5px;
+}
+.widgetIcon{
+  height:30px;
+  width:100px;
+  border: 1px solid #efefef;
+  border-radius: 5px;
+}
+.datasetIcon{
+  height:30px;
+  width:100px;
+  border: 1px solid #efefef;
+  border-radius: 5px; 
+}
+.object{
+  display:flex;
+  flex-direction:column;
+  height:200px;
+  overflow: auto;
+}
+.objContainer{
+  flex:1;
+  display: flex;
+  flex-direction: row;
+}
+.objHeader{
+  font-size: 16px;
+  font-weight: 600;
+  margin-top: 15px;
+  margin-bottom:5px;
 }
 .templateContainer{
   display:flex;
@@ -34,6 +66,7 @@ body {
 }
 .optionsContainer{
   display:flex;
+  flex-direction:column;
   flex:1;
 }
 .parseButton{
@@ -45,7 +78,7 @@ body {
 }
 .renderContainer{
   display:flex;
-  flex:1;
+  width:60%;
 }
 .navHeader{
   display:flex;
@@ -140,6 +173,78 @@ body {
   overflow: hidden;
 }
 
+#templateApp{
+  display:flex;
+  flex:1;
+}
 
 
+.bar{
+	fill: #28C587;
+}
+/* Lighten the axis lines */
+#x-axis path,#y-axis line, #y-axis path{
+	stroke: #666;
+}
+/* Remove the tick marks on the x-axis */
+#x-axis .tick line{
+	visibility: hidden;
+}
 
+text{
+	fill: #666;
+	font-size: 12px;
+}
+
+#x-axis text {
+	font-weight: 600;
+}
+
+
+text{
+	fill: #666;
+	font-size: 12px;
+}
+
+#x-axis text {
+	font-weight: 600;
+}
+
+.chartTemplateEditor{
+  height:100%
+}
+#leftNav{
+  display: flex;
+  width: 130px;
+  flex-direction: column;
+  background:#423C48;
+  color: #cdcdcd;
+}
+.leftNavLink{
+  height:35px;
+  display:flex;
+  align-items: center;
+  font-size:11px;
+  margin-left:10px;
+}
+.leftNavLink a{
+  color: inherit;
+  text-decoration: none;
+}
+#appBody, #root{
+  display:flex;
+  flex-direction: row;
+  height: 100%;
+  width:100%
+}
+
+#leftNav img{
+  height: 15px;
+  width: 15px;
+  margin-right: 7px;
+
+}
+.leftNavLink svg{
+  color: #cdcdcd !important;
+
+}

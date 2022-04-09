@@ -13,6 +13,7 @@ class Template(models.Model):
 class Widget(models.Model):
     user = models.CharField(max_length=50)
     name = models.CharField(max_length=100)
+    widgetid = models.CharField(max_length=50,default=uuid.uuid4, editable=False, unique=True)
     templateid = models.CharField(max_length=50)
     sourceid = models.CharField(max_length=50)
     created = models.DateField(null=True)
@@ -22,5 +23,7 @@ class Widget(models.Model):
 
 class DataSource(models.Model):
     sourceid = models.CharField(max_length=50,default=uuid.uuid4, editable=False, unique=True)
+    user = models.CharField(max_length=50, null=True)
     name = models.CharField(max_length=100, null=True)
-    csv = models.FileField(upload_to ='csvs/')
+    location = models.CharField(max_length=100, null=True)
+    metadata = models.TextField(null=True)

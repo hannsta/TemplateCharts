@@ -23,14 +23,15 @@ function TemplateList(props) {
     var templateObj = []
     if (templates){
         for (var template of templates){
-            templateObj.push(<div onClick={selectTemplate} className="templateIcon" uuid={template[1]}>{template[0]}</div>)
+            templateObj.push(<div onClick={selectTemplate} className="datasetIcon" uuid={template[1]}>{template[0]}</div>)
         }
     }
     return (
-    <div id="templateList">
+    <div id="templateListContainer">
         {templateObj}
     </div>
     )
+
 }
 
 
