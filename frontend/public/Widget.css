@@ -5,7 +5,7 @@
   height:100%;
   font-family: 'Roboto', sans-serif;
 }
-.horizontalContainer{
+.renderContainer{
   display: flex;
   flex-direction: row;
   width:100%;
@@ -14,15 +14,28 @@
 .templateMenuOptions{
   display:flex;
   flex-direction: row;
-  border: 2px solid #ededed;
-  border-radius:5px;
+  align-items: center;
+  font-size:10px;
+  background-image:linear-gradient(to right,#423C48,#1F2023);
   padding-left:10px;
 }
 .templateMenuOption{
   display:flex;
   height:15px;
-  margin:5px;
-  color:black;
+  margin:5px 0px 5px 0px;
+  color:#cdcdcd;
+}
+.templateMenuOptionLabel{
+  color:#cdcdcd; 
+  margin-right:20px;
+}
+.templateMenuOptionLabel:hover{
+  font-weight:600;
+  cursor:pointer;
+}
+.templateMenuOption input{
+  font-size:10px;
+  font-family: 'Open Sans'
 }
 .templateMenuOption img:hover{
   background:#efefef;
@@ -30,8 +43,18 @@
   cursor:pointer;
 }
 #container{
-  display: flex;
+  /* display: flex;
   flex: 1;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column; */
+  width: 100%; 
+  height: 100%;
+}
+.messagePlaceholder{
+  display:flex;
+  font-size:10px;
+  margin:10px
 }
 .templateMenuContainer{
   display: flex;
@@ -42,36 +65,270 @@
   border-right: 2px solid #ededed;
   border-radius: 5px;
 }
+.templateMenuContainer input{
+  font-size:10px;
+
+}
 .templateOptionTitle{
   font-size: 11px;
   color:#5c4c4c;
   margin-top:5px;
   margin-bottom:2px;
 }
-#templateListContainer{
-  display: flex;
-  flex-direction: row; 
-  background: #ededed;
-
+.templateOptionLargeTitle{
+  font-size: 12px;
+  font-weight: 600;
+  color:#5c4c4c;
+  margin-top:20px;
+  margin-bottom:2px;
 }
-#datasourceListContainer{
-  display: flex;
-  flex-direction: row;
-  background: #ededed;
-
+.listContainerTitle{
+  font-family: 'Open Sans';
+  font-size:10px;
+  font-weight: 600;
+  margin-bottom:10px;
+}
+#datasourceListContainer, #templateListContainer{
+  display: none;
+  flex-direction: column;
+  position:absolute;
+  background:#ffffff;
+  margin-top:40px;
+  margin-left:10px;
+  padding:15px;
+  width:200px;
+  box-shadow: 0px 0px 35px #ddd;
+  z-index:19999;
 }
 .datasetIcon{
   display:flex;
-  height:40px;
-  width:100px;
-  border-radius:5px;
+  height:25px;
+  width:185px;
   font-size: 10px;
-  justify-content: center;
+  padding-left:10px;
   align-items: center;
-  background:#ffffff;
-  margin:7 5 7 5px;
+  background:#efefef;
+  margin-top:5px;
+  border:none;
+  border-radius:5px;
+  color: rgb(52, 61, 83);
+  border:1px solid #fff;
+
 }
 .datasetIcon:hover{
+  border-radius:5px;
+  border:1px solid rgb(167, 182, 167);
   cursor:pointer;
-  color:#cccccc;
+  font-weight:600;
+}
+
+.templateMenuItem{
+  display:flex;
+  flex-direction: row;
+  align-items: center;
+}
+.itemHiddenToggle svg{
+  width:12px;
+  color: #666;
+  margin-left:5px;
+}
+.itemHiddenToggle{
+  display:flex;
+  width:100%;
+  justify-content: flex-end;
+}
+
+.columnSearchPopup{
+  display:none;
+  position:absolute;
+  top:250;
+  left:250;
+  width:210px;
+  flex-direction: column;
+  background: #fff;
+  box-shadow: 0px 0px 25px #ddd;
+  padding:15px;
+  z-index: 10000;
+}
+.clickContainer{
+  display:none;
+  position: absolute;
+  top:0;
+  left:0;
+  width:100%;
+  height:100%;
+  z-index: 999;
+}
+.columnTitle{
+  width:125px;
+  font-size:10px;
+  font-family: 'Open Sans';
+  display: flex;
+  align-items: center;
+}
+.columnSearchInput{  
+  margin-top:5px;
+  margin-bottom:10px;
+}
+.columnSelector{
+  display:flex;
+  flex-direction: row;
+  margin-bottom:5px;
+  align-items: center;
+  height:20px;
+  padding-left:10px;
+  padding-right:10px;
+  border:1px solid #fff;
+}
+.columnSelector:hover{
+  cursor: pointer;
+  border:1px solid #eee;
+  border-radius:5px;
+  font-weight:600;
+}
+.columnAgg option{
+  font-size:10px;
+  font-family: 'Open Sans';
+}
+.columnAgg{
+  background: none;
+  border: none;
+  color:#999
+}
+.columnIcon {
+  display:flex;
+  align-items: center;
+  margin-right:10px;
+}
+.selectedColumn{
+  border:1px solid rgb(167, 182, 167);
+  border-radius:5px;
+  background:#efefef;
+
+}
+.columnSelectedCount{
+  font-size:10px;
+  min-width: 50px;
+  font-family: 'Open Sans';
+  margin-bottom:5px;
+}
+.columnSelectedCount:hover{
+  cursor:pointer;
+}
+.metric{
+  color:#b37724;
+}
+.dimension{
+  color:#6e648f;
+}
+.columnIcon svg{
+  width:15px;
+  height:15px;
+}
+.columnSearchPopup{
+  flex-direction: column;
+}
+
+.textInput input{
+  border:1px solid rgb(167, 182, 167);
+  border-radius:5px;
+  width:120px;
+  height:20px;
+  padding-left:5px;
+  margin-top:5px;
+
+}
+.selectInput select{
+  font-size:10px;
+  font-family: 'Open Sans';
+  margin-top:5px;
+  background:#efefef;
+  border:1px solid rgb(167, 182, 167);
+  border-radius:5px;
+  width:120px;
+  height:20px;
+  padding-left:5px;
+}
+
+.lds-default {
+  display: inline-block;
+  position: relative;
+  width: 80px;
+  height: 80px;
+}
+.lds-default div {
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  background: #5c4c4c;
+  border-radius: 50%;
+  animation: lds-default 1.2s linear infinite;
+}
+.lds-default div:nth-child(1) {
+  animation-delay: 0s;
+  top: 37px;
+  left: 66px;
+}
+.lds-default div:nth-child(2) {
+  animation-delay: -0.1s;
+  top: 22px;
+  left: 62px;
+}
+.lds-default div:nth-child(3) {
+  animation-delay: -0.2s;
+  top: 11px;
+  left: 52px;
+}
+.lds-default div:nth-child(4) {
+  animation-delay: -0.3s;
+  top: 7px;
+  left: 37px;
+}
+.lds-default div:nth-child(5) {
+  animation-delay: -0.4s;
+  top: 11px;
+  left: 22px;
+}
+.lds-default div:nth-child(6) {
+  animation-delay: -0.5s;
+  top: 22px;
+  left: 11px;
+}
+.lds-default div:nth-child(7) {
+  animation-delay: -0.6s;
+  top: 37px;
+  left: 7px;
+}
+.lds-default div:nth-child(8) {
+  animation-delay: -0.7s;
+  top: 52px;
+  left: 11px;
+}
+.lds-default div:nth-child(9) {
+  animation-delay: -0.8s;
+  top: 62px;
+  left: 22px;
+}
+.lds-default div:nth-child(10) {
+  animation-delay: -0.9s;
+  top: 66px;
+  left: 37px;
+}
+.lds-default div:nth-child(11) {
+  animation-delay: -1s;
+  top: 62px;
+  left: 52px;
+}
+.lds-default div:nth-child(12) {
+  animation-delay: -1.1s;
+  top: 52px;
+  left: 62px;
+}
+@keyframes lds-default {
+  0%, 20%, 80%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.5);
+  }
 }

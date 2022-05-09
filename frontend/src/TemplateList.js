@@ -27,7 +27,7 @@ function TemplateList(props) {
         }
     }
     return (
-    <div id="templateListContainer">
+    <div id="templateListContainerApp">
         {templateObj}
     </div>
     )

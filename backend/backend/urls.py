@@ -35,4 +35,7 @@ urlpatterns = [
     path('get_user_data',views.get_user_data, name='get_user_data'),
     path('get_data',views.get_data, name='get_data'),
     path('get_metadata',views.get_metadata, name='get_metadata'),
+    path('save_connection',views.save_connection,name='save_connection'),
+    path('get_connection',views.get_connection,name='get_connection'),
+    path('get_source_filters',views.get_source_filters,name='get_source_filters')
 ]

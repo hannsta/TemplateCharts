@@ -17,19 +17,25 @@ const [scripts, setScripts] = useState('')
 const [templateName, setTemplateName] = useState('')
 const [templateId, setTemplateId] = useState('')
 const [properties, setProperties] = useState('')
+const [widgetId, setWidgetId] = useState('')
 
 
-function loadWidget(){
-
+function loadWidget(uuid){
+  fetch('get_widget?widgetid='+uuid+'&role=WRITE')
+  .then(response => response.json())
+  .then(data => {
+    setWidgetId(data.widgetid)
+  })
 }
 
 
 return (
   <div id="templater">
-      <WidgetList loadWidget={loadWidget} />
       <div className="renderContainer">
-          <TemplateAppWidget widgetId={undefined} templateId={templateId} datasourceSelect={true} templateSelect={true} key={templateId}></TemplateAppWidget>
+          <TemplateAppWidget widgetId={widgetId} templateId={templateId} datasourceSelect={true} templateSelect={true} key={widgetId}></TemplateAppWidget>
       </div>
+      <WidgetList loadWidget={loadWidget} />
+
   </div>
 )
 }

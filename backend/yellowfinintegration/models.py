@@ -26,4 +26,12 @@ class DataSource(models.Model):
     user = models.CharField(max_length=50, null=True)
     name = models.CharField(max_length=100, null=True)
     location = models.CharField(max_length=100, null=True)
+    type = models.CharField(max_length=20, null=True)
     metadata = models.TextField(null=True)
+
+class APIConnection(models.Model):
+    connectionid = models.CharField(max_length=50,default=uuid.uuid4, editable=False, unique=True)
+    sourceid = models.CharField(max_length=50)
+    url = models.CharField(max_length=100, null=True)
+    parameters = models.JSONField(null=True)
+    resultobject = models.CharField(max_length=50, null=True)
