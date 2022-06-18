@@ -1,6 +1,4 @@
 from django.shortcuts import render
-
-from . import yellowfin
 import json
 from django.shortcuts import render
 from django.http import HttpRequest
@@ -11,7 +9,7 @@ from django.contrib.auth import authenticate, login, logout
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import ensure_csrf_cookie, csrf_exempt
-from yellowfinintegration.models import Template, DataSource, Widget, APIConnection
+from yellowfinintegration.models import Dataset, Template, DataSource, Widget, APIConnection, Dashboard
 import datetime
 from django.forms.models import model_to_dict
 from django.core import serializers
@@ -21,6 +19,7 @@ import pandas as pd
 import re
 from io import StringIO
 from . import dataservice
+from . import modelservice
 
 # Create your views here.
 def get_refresh_token(request):
@@ -84,6 +83,7 @@ def get_template(request):
             if (len(placeholders) > 0):
                 for holder in placeholders:
                     customVar = holder.replace('{{','').replace('}}','').split("|")
+                    if (len(customVar)<2): continue
                     customVarOptions ={
                         'name':customVar[0],
                         'type':customVar[1]
@@ -148,7 +148,6 @@ def get_script(request):
         properties = body['properties']
 
         if ('widgetid' in body):
-            
             widgetid = body['widgetid']
             widgets = Widget.objects.filter(user=request.user.username, widgetid=widgetid) 
             widget = widgets.first()
@@ -163,7 +162,7 @@ def get_script(request):
         for key in properties:
             property = properties[key]
             if (property['type']=='CategoryColumn' or property['type']=='ValueColumn'):
-                selectedColumns[key]=property['value'][0]
+                selectedColumns[key]=list(property['value'].keys())[0]
 
 
         
@@ -174,16 +173,23 @@ def get_script(request):
             if (len(placeholders) > 0):
                 for holder in placeholders:
                     customVar = holder.replace('{{','').replace('}}','').split("|")
-                    if (customVar[1]=='String'):
-                        line = line.replace(holder,"'"+properties[customVar[0]]['value']+"'")
-                    if (customVar[1]=='SubMenu'):
-                        line = line.replace(holder,"")
-                    if (customVar[1]== 'MultiSelect'):
-                        line = line.replace(holder,"'"+properties[customVar[0]]['value'][0]+"'")           
-                    if ('CategoryColumn' == customVar[1] or 'ValueColumn' == customVar[1] ):
-                        line = line.replace(holder,"dataSet['"+properties[customVar[0]]['value'][0]+"']")
-                    if ('ColumnList' in customVar[1]):
-                        line = line.replace(holder,"dataSet")
+                    
+                    if (len(customVar)>1):
+                    
+                        if (customVar[1]=='String'):
+                            line = line.replace(holder,"'"+properties[customVar[0]]['value']+"'")
+                        if (customVar[1]=='SubMenu'):
+                            line = line.replace(holder,"")
+                        if (customVar[1]== 'MultiSelect'):
+                            line = line.replace(holder,"'"+properties[customVar[0]]['value']+"'")           
+                        if ('CategoryColumn' == customVar[1] or 'ValueColumn' == customVar[1] ):
+                            dataSetVar = list(properties[customVar[0]]['value'].keys())[0]
+                            line = line.replace(holder,"dataSet['"+dataSetVar+"']")
+                        if ('ColumnList' in customVar[1]):
+                            line = line.replace(holder,"dataSet")
+                    if (len(customVar)==1 and customVar[0]=='ContainerID'):
+                        line = line.replace(holder,widgetid)
+                      
             outfile+=line
         return HttpResponse(outfile, content_type='text/plain')
     return HttpResponse(status=503)
@@ -225,10 +231,12 @@ def upload_data(request):
         'int64':'NUMERIC',
         'float64':'NUMERIC',
         }
-        dataset = pd.read_csv(data)
+        dataset = pd.read_csv(data,delimiter=",")
         metadata = {}
         for i in range(len(dataset.columns)):
-            metadata[dataset.columns[i]]=dataTypeMap[str(dataset.dtypes[i])]
+            colname = dataset.columns[i]
+            colname = colname.replace('"','').replace("'","")
+            metadata[colname]=dataTypeMap[str(dataset.dtypes[i])]
         dataset.to_csv(os.path.join(settings.BASE_DIR, 'uploads/'+body['name']))
         datasource = DataSource(
             user=request.user.username, 
@@ -242,70 +250,130 @@ def upload_data(request):
 
 def get_user_data(request):
     if request.method=='GET':
-        datasources = DataSource.objects
-        content = json.dumps(list(datasources.values()))
+        data_type = 'all'
+        if 'type' in request.GET:
+            data_type = request.GET['type']
+        datasources = list(DataSource.objects.values_list("name", "sourceid"))
+       
+        datalist = []
+        if data_type != 'dataset':
+            datasources = list(DataSource.objects.values_list("name", "sourceid","type"))
+            for val in datasources:
+                if data_type == 'all' or (val[2] == 'API' and data_type == 'api') or (val[2] == 'FILE' and data_type == 'csv'):
+                    datalist.append({'name':val[0],'sourceid':val[1]})
+        if data_type == 'dataset' or data_type == 'all':
+            datasets = list(Dataset.objects.values_list("name", "datasetid"))
+            for val in datasets:
+                datalist.append({'name':val[0],'sourceid':val[1]})
+        content = json.dumps(datalist)
+
         return HttpResponse(content, content_type='application/json')
+
+def get_source_filters(request):
+    if request.method=='GET':
+        sourceid = request.GET['sourceid']
+
+        datasets = Dataset.objects.filter(datasetid=sourceid)
+        params = json.dumps([])
+        if (datasets):
+            dataset = datasets.first()
+            for datasetNode in dataset.nodes:
+                if datasetNode['nodeType'] == 'API Input':
+                    sourceid = datasetNode['config']
+                    api_connections = APIConnection.objects.filter(sourceid=sourceid) 
+                    api_connection = api_connections.first()  
+                    params = json.dumps(api_connection.parameters)
+        else:
+            datas = DataSource.objects.filter(sourceid=sourceid) 
+            data = datas.first()
+            if (data.type == 'API'):
+                api_connections = APIConnection.objects.filter(sourceid=sourceid) 
+                api_connection = api_connections.first()  
+                params = json.dumps(api_connection.parameters)
+
+        return HttpResponse(params, content_type='application/json')
+           
+def get_metadata(request):
+    if request.method=='GET':
+        sourceid = request.GET['sourceid']
+
+        datasets = Dataset.objects.filter(datasetid=sourceid)
+
+        if (datasets):
+            dataset = datasets.first()
+            metadata = json.dumps(dataservice.get_dataset_metadata(dataset))
+        else:
+            datas = DataSource.objects.filter(sourceid=sourceid) 
+            data = datas.first()
+            
+            if (data.type=='FILE'):                
+                metadata = json.dumps(json.loads(data.metadata))
+                
+            if (data.type == 'API'):
+                api_connections = APIConnection.objects.filter(sourceid=sourceid) 
+                api_connection = api_connections.first()
+                metadata = json.dumps(dataservice.get_api_metadata(api_connection,  api_connection.parameters, api_connection.resultobject))
+
+        return HttpResponse(metadata, content_type='application/json')
+
+def test_dataset(request):
+    if request.method=='GET':
+        sourceid = request.GET['datasetid']
+
+        datasets = Dataset.objects.filter(datasetid=sourceid)
+
+        if (datasets):
+            dataset = datasets.first()
+            verbose_metadata = json.dumps(dataservice.get_dataset_metadata(dataset,verbose=True))
+
+    return HttpResponse(verbose_metadata, content_type='application/json')
+
+
 @csrf_exempt 
 def get_data(request):
     if request.method=='POST':
         body_unicode = request.body.decode('utf-8')
         body = json.loads(body_unicode)  
-        sourceid = body['sourceid']
-        datas = DataSource.objects.filter(sourceid=sourceid) 
-        data = datas.first()
         
-        if (data.type=='File'):
-            data = pd.read_csv(os.path.join(settings.BASE_DIR, 'uploads/'+data.name))
-        if (data.type == 'API'):
-            api_connections = APIConnection.objects.filter(sourceid=sourceid) 
-            api_connection = api_connections.first()
-            data = dataservice.get_api_data(api_connection, body['sourceFilterProperties'], api_connection.resultobject)
-        print("number of rows: "+str(data.shape[0]))
+        #Request Properties
+        sourceid = body['sourceid']
+        user = request.user.username
+        runtimeFilterDefs = body['runtimeFilterDefs']
+        runtimeFilterProperties = body['runtimeFilterProperties']
         properties = body['properties']
+        source_filters = body['sourceFilterProperties']
+ 
+        if ('widgetid' in body):   
+            widgetid = body['widgetid']      
 
-        if ('widgetid' in body):
-            
-            widgetid = body['widgetid']
-            widgets = Widget.objects.filter(user=request.user.username, widgetid=widgetid) 
-            widget = widgets.first()
-            if (widget):
-                widget = widget.widget
-
-                for key in widget:
-                    if (widget[key]['hidden']):
-                        properties[key]= {'type': widget[key]['type'],'value': widget[key]['value']} 
-
+        datasets = Dataset.objects.filter(datasetid=sourceid)
+        if (datasets):
+            dataset = datasets.first()
+            data = dataservice.run_dataset(dataset, source_filters)
+        else:
+            data = dataservice.get_data(sourceid, source_filters)
 
 
-        groupfields =[]
-        numberfields = []
-        usedfields = []
-        for property in properties:
-            if (properties[property]):
-                type = properties[property]['type']
-                value = properties[property]['value']
-                if type == 'CategoryColumn':
-                    groupfields.append(value[0])
-                    usedfields.append(value[0])
-                if type == 'ValueColumn':
-                    numberfields.append(value[0])
-                    usedfields.append(value[0])
-                if type=='ColumnList' or type=='ColumnListRecords':
-                    usedfields.extend(value)
-        if (len(usedfields)==0):
-            return HttpResponse(json.dumps({}), content_type='application/json')
+        #Get Cached Values
+        cachedValues = dataservice.cachedValues(data,runtimeFilterDefs)
 
-        data = data[usedfields]
+        #Process Runtime filters
+        data = dataservice.runtimeFilters(data,runtimeFilterProperties)
 
-        if (len(groupfields)==0 and 'ColumnList' in type):
-            for i in range(len(data.columns)):
-                if (str(data.dtypes[i]) == 'object'):
-                    groupfields.append(data.columns[i])
-                     
-        if (len(groupfields)>0):
-            data = data.groupby(groupfields).sum().reset_index()
+        #Apply Widget Properties
+        if (widgetid):
+            properties = modelservice.getWidgetProperties(widgetid,user, properties)
+        
+        #Agg
+        data = dataservice.smartAgg(data,properties)           
 
-        if (type=='ColumnListRecords'):
+        out_type = 'data'
+        if 'Data' in properties and 'type' in properties['Data']:
+            out_type = properties['Data']['type']
+        #Format for response
+        print(out_type)
+        print("===========================")
+        if (out_type=='ColumnListRecords'):
             out_data = data.to_json(orient="records")
             out_data = json.loads(out_data)
         else:
@@ -314,22 +382,8 @@ def get_data(request):
                 out_data[colname] = data[colname].tolist()
 
             
-        return HttpResponse(json.dumps(out_data), content_type='application/json')
-     
-def get_metadata(request):
-    if request.method=='GET':
-        sourceid = request.GET['sourceid']
-        datas = DataSource.objects.filter(sourceid=sourceid) 
-        data = datas.first()
-        
-        if (data.type=='File'):
-            metadata = data.metadata
-        if (data.type == 'API'):
-            api_connections = APIConnection.objects.filter(sourceid=sourceid) 
-            api_connection = api_connections.first()
-            metadata = json.dumps(dataservice.get_api_metadata(api_connection,  api_connection.parameters, api_connection.resultobject))
+        return HttpResponse(json.dumps({'dataset':out_data,'filterValues':cachedValues}), content_type='application/json')
 
-        return HttpResponse(metadata, content_type='application/json')
 
 def get_widget(request):
     if request.method=='GET':
@@ -351,6 +405,8 @@ def get_widget(request):
                 'templateid':widget.templateid,
                 'widgetName':widget.name,
                 'widgetid':widget.widgetid,
+                'sourceFilters' : widget.sourceFilters,
+                'runtimeFilters' : widget.runtimeFilters,
                 'widget':widgetCopy
             }
             widgetJson = json.dumps(widgetJson)
@@ -362,17 +418,29 @@ def get_widgets(request):
         widgets = Widget.objects.filter(user=request.user.username)
         content  = list(widgets.values_list("name", "widgetid"))
         return HttpResponse(json.dumps(content), content_type='application/json')
+def delete_widget(request):
+    if request.method=='GET':
+        widgetid = request.GET['widgetid']
+        widgets = Widget.objects.filter(user=request.user.username, widgetid=widgetid) 
+        widget = widgets.first()
+        if (widget):    
+            widget.delete()
+        return HttpResponse(json.dumps({"status":"deleted"}), content_type='application/json')
+
 def save_widget(request):
     if request.method=='POST':
         body_unicode = request.body.decode('utf-8')
         body = json.loads(body_unicode)  
         widgets = None
-        if (body['widgetid']):
+        if ('widgetid' in body):
             widgets = Widget.objects.filter(user=request.user.username, widgetid=body['widgetid']) 
         if (widgets):
             widget = widgets.first()
             widget.name = body['widgetName']
             widget.widget = body['widget']
+            widget.sourceFilters = body['sourceFilters']
+            widget.runtimeFilters = body['runtimeFilters']
+            widget.runtimeFilterDefs = body['runtimeFilterDefs']
             widget.templateid = body['templateid']
             widget.sourceid = body['sourceid']
             widget.save()
@@ -383,6 +451,9 @@ def save_widget(request):
                 modified = datetime.datetime.now(),
                 name = body['widgetName'],
                 widget = body['widget'],
+                sourceFilters = body['sourceFilters'],
+                runtimeFilters = body['runtimeFilters'],
+                runtimeFilterDefs = body['runtimeFilterDefs'],
                 templateid = body['templateid'],
                 sourceid = body['sourceid']
             )
@@ -390,6 +461,52 @@ def save_widget(request):
         
         content = widget.widgetid
         return HttpResponse(content, content_type='application/json')
+def save_dashboard(request):
+    if request.method=='POST':
+        body_unicode = request.body.decode('utf-8')
+        body = json.loads(body_unicode)  
+        dashboards = None
+        if ('dashboardid' in body):
+            dashboards = Dashboard.objects.filter(user=request.user.username, dashboardid=body['dashboardid']) 
+        if (dashboards):
+            dashboard = dashboards.first()
+            dashboard.name = body['dashboardName']
+            dashboard.widgets = body['widgets']
+            dashboard.save()
+        else:
+            dashboard = Dashboard(
+                user = request.user.username,
+                created = datetime.datetime.now(),
+                modified = datetime.datetime.now(),
+                name = body['dashboardName'],
+                widgets = body['widgets'],
+            )
+            dashboard.save()
+        
+        content = dashboard.dashboardid
+        return HttpResponse(content, content_type='application/json')
+
+def get_dashboard(request):
+    if request.method=='GET':
+        dashboardid = request.GET['dashboardid']
+        role = request.GET['role']
+        dashboards = Dashboard.objects.filter(user=request.user.username, dashboardid=dashboardid) 
+        dashboard = dashboards.first()
+        if (dashboard):
+            dashboardJSON = {
+                'dashboardName':dashboard.name,
+                'dashboardid':dashboard.dashboardid,
+                'widgets':dashboard.widgets
+            }
+            dashboardJSON = json.dumps(dashboardJSON)
+        else:
+            dashboardJSON = json.dumps({'error':'no widget found'})
+        return HttpResponse(dashboardJSON, content_type='application/json')
+def get_dashboards(request):
+    if request.method=='GET':
+        dashboards = Dashboard.objects.filter(user=request.user.username)
+        content  = list(dashboards.values_list("name", "dashboardid"))
+        return HttpResponse(json.dumps(content), content_type='application/json')
 
 def save_connection(request):
     if request.method=='POST':
@@ -440,14 +557,49 @@ def get_connection(request):
             widgetJson = json.dumps({'error':'no widget found'})
         return HttpResponse(widgetJson, content_type='application/json')
 
-def get_source_filters(request):
+
+def save_dataset(request):
+    if request.method=='POST':
+        body_unicode = request.body.decode('utf-8')
+        body = json.loads(body_unicode)  
+        datasets = None
+        if ('id' in body):
+            datasets = Dataset.objects.filter(user=request.user.username, datasetid=body['id']) 
+        if (datasets):
+            dataset = datasets.first()
+            dataset.name = body['name']
+            dataset.nodes = body['nodes']
+            dataset.save()
+        else:
+            dataset = Dataset(
+                user = request.user.username,
+                created = datetime.datetime.now(),
+                modified = datetime.datetime.now(),
+                name = body['name'],
+                nodes = body['nodes'],
+            )
+            dataset.save()
+        
+        content = dataset.datasetid
+        return HttpResponse(content, content_type='application/json')
+
+def get_dataset(request):
     if request.method=='GET':
-        sourceid = request.GET['sourceid']
-        datas = DataSource.objects.filter(sourceid=sourceid) 
-        data = datas.first()
-        params = []
-        if (data.type == 'API'):
-            api_connections = APIConnection.objects.filter(sourceid=sourceid) 
-            api_connection = api_connections.first()  
-            params = json.dumps(api_connection.parameters)
-        return HttpResponse(params, content_type='application/json')
+        datasetid = request.GET['datasetid']
+        datasets = Dataset.objects.filter(user=request.user.username, datasetid=datasetid) 
+        dataset = datasets.first()
+        if (dataset):
+            datasetJSON = {
+                'name':dataset.name,
+                'id':dataset.id,
+                'nodes':dataset.nodes,
+            }
+            datasetJSON = json.dumps(datasetJSON)
+        else:
+            datasetJSON = json.dumps({'error':'no widget found'})
+        return HttpResponse(datasetJSON, content_type='application/json')
+def get_datasets(request):
+    if request.method=='GET':
+        datasets = Dataset.objects.filter(user=request.user.username)
+        content  = list(datasets.values_list("name", "datasetid"))
+        return HttpResponse(json.dumps(content), content_type='application/json')

@@ -19,7 +19,17 @@ class Widget(models.Model):
     created = models.DateField(null=True)
     modified = models.DateField(null=True)
     widget = models.JSONField(null=True)
+    sourceFilters = models.JSONField(null=True)
+    runtimeFilters = models.JSONField(null=True)
+    runtimeFilterDefs = models.JSONField(null=True)
 
+class Dashboard(models.Model):
+    created = models.DateField(null=True)
+    modified = models.DateField(null=True)
+    user = models.CharField(max_length=50)
+    name = models.CharField(max_length=100)
+    dashboardid = models.CharField(max_length=50,default=uuid.uuid4, editable=False, unique=True)
+    widgets = models.JSONField(null=True)
 
 class DataSource(models.Model):
     sourceid = models.CharField(max_length=50,default=uuid.uuid4, editable=False, unique=True)
@@ -35,3 +45,11 @@ class APIConnection(models.Model):
     url = models.CharField(max_length=100, null=True)
     parameters = models.JSONField(null=True)
     resultobject = models.CharField(max_length=50, null=True)
+
+class Dataset(models.Model):
+    created = models.DateField(null=True)
+    modified = models.DateField(null=True)
+    user = models.CharField(max_length=50)
+    datasetid = models.CharField(max_length=50,default=uuid.uuid4, editable=False, unique=True)
+    name = models.CharField(max_length=50)
+    nodes = models.JSONField(null=True)

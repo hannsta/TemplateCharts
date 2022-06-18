@@ -26,7 +26,8 @@ urlpatterns = [
     path('get_templates',views.get_templates, name='get_templates'), 
     path('get_template',views.get_template, name='get_template'),    
     path('get_widget',views.get_widget, name='get_widget'),       
-    path('get_widgets',views.get_widgets, name='get_widgets'),       
+    path('get_widgets',views.get_widgets, name='get_widgets'), 
+    path('delete_widget',views.delete_widget,name='delete_widget'),      
     path('save_widget',views.save_widget, name='save_widget'),          
     path('add_user', views.add_user, name='add_user'),
     path('login_user', views.login_user, name='login_user'),
@@ -37,5 +38,13 @@ urlpatterns = [
     path('get_metadata',views.get_metadata, name='get_metadata'),
     path('save_connection',views.save_connection,name='save_connection'),
     path('get_connection',views.get_connection,name='get_connection'),
-    path('get_source_filters',views.get_source_filters,name='get_source_filters')
+    path('get_source_filters',views.get_source_filters,name='get_source_filters'),
+    path('get_dashboard',views.get_dashboard, name='get_dashboard'),       
+    path('save_dashboard',views.save_dashboard, name='save_dashboard'),       
+    path('get_dashboards',views.get_dashboards, name='get_dashboards'),       
+    path('get_dataset',views.get_dataset, name='get_dataset'),       
+    path('save_dataset',views.save_dataset, name='save_dataset'),       
+    path('get_datasets',views.get_datasets, name='get_datasets'),       
+    path('test_dataset',views.test_dataset, name='test_dataset'),       
+
 ]
